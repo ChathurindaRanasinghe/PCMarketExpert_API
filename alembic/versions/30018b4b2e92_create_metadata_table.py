@@ -17,11 +17,15 @@ depends_on = None
 
 
 def upgrade():
-    op.create_table('shop-metadata', sa.Column('id', sa.Integer(), nullable=False, primary_key=True),
-                    sa.Column('name', sa.String(), nullable=False))
+    op.create_table("shop-metadata", sa.Column('id', sa.Integer(), nullable=False, primary_key=True),
+                    sa.Column('name', sa.String(), nullable=False),
+                    sa.Column('metadata', sa.JSON(),nullable=False))
+    op.create_foreign_key('shop_name_fk',source_table="shop-metadata",referent_table="products", local_cols=['name'],remote_cols=['shop'],
+    ondelete="CASCADE")
     pass
 
 
 def downgrade():
+    op.drop_constraint('shop_name_fk',table_name="shop-metadata")
     op.drop_table('shop-metadata')
     pass
