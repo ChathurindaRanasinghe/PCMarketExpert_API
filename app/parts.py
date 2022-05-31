@@ -1,1 +1,0 @@
-PARTS = ['cpu','gpu','memory']
