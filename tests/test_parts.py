@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 import pytest
 from app.main import app
 from app import schemas
-from fastapi import status, HTTPException
+from fastapi import status
 from .test_data import INVALID_PARTS, NO_PARTS, NO_PARTS_WITH_MINUS_AND_ZERO
 client = TestClient(app)
 
@@ -23,7 +23,7 @@ def test_parts_invalid_part(part: str):
 
 
 @pytest.mark.parametrize("limit", NO_PARTS)
-def test_parts_limit(limit: str):
+def test_parts_limit(limit: int):
     res = client.get(f"parts/gpu?limit={limit}")
     assert int(limit) >= len(res.json())
     assert res.status_code == status.HTTP_200_OK
