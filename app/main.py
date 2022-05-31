@@ -1,3 +1,4 @@
+from select import select
 from fastapi import FastAPI, Response, status, Depends, HTTPException
 from . import models
 from .database import engine, get_db
@@ -18,7 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+# , columns: List[str] = ["*"]
 @app.get("/parts/{category}/", status_code=status.HTTP_200_OK, response_model=List[PartResponse])
 def get_parts(category: str, limit: int = 100000, db: Session = Depends(get_db)):
     if limit <= 0:
