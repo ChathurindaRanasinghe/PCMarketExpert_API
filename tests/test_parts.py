@@ -4,7 +4,11 @@ import pytest
 from app.main import app
 from app import schemas
 from fastapi import status
+<<<<<<< HEAD
 import test_data
+=======
+from .test_data import INVALID_PARTS, NO_PARTS, NO_PARTS_WITH_MINUS_AND_ZERO
+>>>>>>> ec49ec3eec3b077010d9157ca079171e5a8baaa7
 client = TestClient(app)
 
 
@@ -22,7 +26,11 @@ def test_parts_invalid_part(part: str):
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
 
+<<<<<<< HEAD
 @pytest.mark.parametrize("limit",  test_data.NO_PARTS)
+=======
+@pytest.mark.parametrize("limit", NO_PARTS)
+>>>>>>> ec49ec3eec3b077010d9157ca079171e5a8baaa7
 def test_parts_limit(limit: int):
     res = client.get(f"parts/gpu?limit={limit}")
     assert int(limit) >= len(res.json())
