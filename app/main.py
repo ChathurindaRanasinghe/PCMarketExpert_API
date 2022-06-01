@@ -7,6 +7,8 @@ from .schemas import PartResponse
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 from .data import PARTS, SHOPS
+
+
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -55,5 +57,3 @@ def get_parts_from_shop(shop: str, category: str, limit: int = 100000, db: Sessi
     elif category not in PARTS:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail=f"{category} is not a valid part name.")
-    
-
