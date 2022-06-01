@@ -4,11 +4,7 @@ import pytest
 from app.main import app
 from app import schemas
 from fastapi import status
-<<<<<<< HEAD
 import test_data
-=======
-from .test_data import INVALID_PARTS, NO_PARTS, NO_PARTS_WITH_MINUS_AND_ZERO
->>>>>>> ec49ec3eec3b077010d9157ca079171e5a8baaa7
 client = TestClient(app)
 
 
