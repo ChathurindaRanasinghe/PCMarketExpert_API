@@ -8,12 +8,14 @@ on: #push #[push, pull_request]
 
 jobs:
   job1:
+    environment:
+      name: Testing
     env:
-      DATABASE_HOSTNAME: localhost
-      DATABASE_PORT: 5432
-      DATABASE_PASSWORD: Chathurinda99*
-      DATABASE_NAME: PCMarketExpert
-      DATABASE_USERNAME: postgres
+      DATABASE_HOSTNAME: ${{secrets.DATABASE_HOSTNAME}}
+      DATABASE_PORT: ${{secrets.DATABASE_PORT}}
+      DATABASE_PASSWORD: ${{secrets.DATABASE_PASSWORD}}
+      DATABASE_NAME: ${{secrets.DATABASE_NAME}}
+      DATABASE_USERNAME: ${{secrets.DATABASE_USERNAME}}
     runs-on: ubuntu-latest
     steps:
       - name: pulling git repo
