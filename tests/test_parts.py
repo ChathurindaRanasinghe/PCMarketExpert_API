@@ -32,11 +32,11 @@ app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
 
 
-def test_parts():
-    res = client.get("/parts/", params={'category': 'gpu'})
-    for index in range(0, len(res.json())):
-        schemas.PartResponse(**(res.json()[index]))
-    assert res.status_code == status.HTTP_200_OK
+# def test_parts():
+#     res = client.get("/parts/", params={'category': 'gpu'})
+#     for index in range(0, len(res.json())):
+#         schemas.PartResponse(**(res.json()[index]))
+#     assert res.status_code == status.HTTP_200_OK
 
 
 def test_zero_parts():
@@ -58,8 +58,8 @@ def test_parts_limit(limit: int):
     assert res.status_code == status.HTTP_200_OK
 
 
-@pytest.mark.parametrize("limit", NO_PARTS_WITH_MINUS_AND_ZERO)
-def test_parts_limit_with_minus_and_zero(limit: int):
-    res = client.get("/parts/", params={'category': 'gpu', 'limit': f'{limit}'})
-    assert res.json()['detail'] == f"{limit} is not a valid number of parts."
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
+# @pytest.mark.parametrize("limit", NO_PARTS_WITH_MINUS_AND_ZERO)
+# def test_parts_limit_with_minus_and_zero(limit: int):
+#     res = client.get("/parts/", params={'category': 'gpu', 'limit': f'{limit}'})
+#     assert res.json()['detail'] == f"{limit} is not a valid number of parts."
+#     assert res.status_code == status.HTTP_400_BAD_REQUEST
