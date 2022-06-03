@@ -22,6 +22,10 @@ app.add_middleware(
 
 # , columns: List[str] = ["*"]
 
+@app.get("/")
+def root():
+    return {"message":"===========DEPLOYMENT SUCCESSFUL==========="}
+
 
 @app.get("/parts/", status_code=status.HTTP_200_OK, response_model=List[PartResponse])
 def get_parts(category: str, limit: int = 100000, db: Session = Depends(get_db)):
