@@ -1,13 +1,11 @@
-from select import select
 from fastapi import FastAPI, Response, status, Depends, HTTPException
 from . import models
 from .database import engine, get_db
 from sqlalchemy.orm import Session
-from .schemas import PartResponse
+from .schemas import PartResponse, ShopMetadataResponse
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 from .data import PARTS, SHOPS
-
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -20,6 +18,7 @@ app.add_middleware(
     allow_methods=["GET"],
     allow_headers=["*"],
 )
+
 
 # , columns: List[str] = ["*"]
 
@@ -57,3 +56,8 @@ def get_parts_from_shop(shop: str, category: str, limit: int = 100000, db: Sessi
     elif category not in PARTS:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail=f"{category} is not a valid part name.")
+
+# @app.get("/shop/metadata",  status_code=status.HTTP_200_OK, response_model=ShopMetadataResponse)
+# def get_shop_metadata(shop: str, db: Session = Depends(get_db)):
+#     if shop in SHOPS:
+#         metadata = db.query(models.)

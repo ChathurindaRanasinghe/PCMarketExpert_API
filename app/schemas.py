@@ -16,4 +16,8 @@ class PartResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+class ShopMetadataResponse(BaseModel):
+    name: str
+    no_of_products: int
     

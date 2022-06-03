@@ -17,3 +17,7 @@ class Products(Base):
     availability = Column(Boolean, nullable=False)
     spec = Column(JSON, nullable=False)
     created_date = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+
+
+# class ShopMetadata(Base):
+#    __tablename__ = ""
