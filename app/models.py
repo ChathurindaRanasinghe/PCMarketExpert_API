@@ -19,5 +19,10 @@ class Products(Base):
     created_date = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
 
 
-# class ShopMetadata(Base):
-#    __tablename__ = ""
+class ShopMetadata(Base):
+    __tablename__ = "shop-basic_data"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    name = Column(String, nullable=False)
+    link = Column(String, nullable=False)
+    basic_data = Column(JSON, nullable=False)

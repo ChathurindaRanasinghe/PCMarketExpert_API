@@ -57,7 +57,7 @@ def get_parts_from_shop(shop: str, category: str, limit: int = 100000, db: Sessi
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail=f"{category} is not a valid part name.")
 
-# @app.get("/shop/metadata",  status_code=status.HTTP_200_OK, response_model=ShopMetadataResponse)
+# @app.get("/shop/basic_data",  status_code=status.HTTP_200_OK, response_model=ShopMetadataResponse)
 # def get_shop_metadata(shop: str, db: Session = Depends(get_db)):
 #     if shop in SHOPS:
-#         metadata = db.query(models.)
+#         basic_data = db.query(models.)

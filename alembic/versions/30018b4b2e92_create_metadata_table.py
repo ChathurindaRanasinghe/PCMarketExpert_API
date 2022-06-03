@@ -1,4 +1,4 @@
-"""create metadata table
+"""create basic_data table
 
 Revision ID: 30018b4b2e92
 Revises: 
@@ -17,12 +17,12 @@ depends_on = None
 
 
 def upgrade():
-    op.create_table("shop-metadata", sa.Column('id', sa.Integer(), nullable=False, primary_key=True),
+    op.create_table("shop-basic_data", sa.Column('id', sa.Integer(), nullable=False, primary_key=True),
                     sa.Column('name', sa.String(), nullable=False),
-                    sa.Column('metadata', sa.JSON(),nullable=False))
+                    sa.Column('basic_data', sa.JSON(),nullable=False))
     pass
 
 
 def downgrade():
-    op.drop_table('shop-metadata')
+    op.drop_table('shop-basic_data')
     pass
