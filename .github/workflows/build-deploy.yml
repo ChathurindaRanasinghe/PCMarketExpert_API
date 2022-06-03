@@ -1,5 +1,6 @@
 name: Build and Deploy Code
 
+# env can be specified here also
 on: #push #[push, pull_request]
   push:
     branches:
@@ -7,6 +8,12 @@ on: #push #[push, pull_request]
 
 jobs:
   job1:
+    env:
+      DATABASE_HOSTNAME: localhost
+      DATABASE_PORT: 5432
+      DATABASE_PASSWORD: Chathurinda99*
+      DATABASE_NAME: PCMarketExpert
+      DATABASE_USERNAME: postgres
     runs-on: ubuntu-latest
     steps:
       - name: pulling git repo
