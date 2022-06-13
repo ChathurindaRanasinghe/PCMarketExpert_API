@@ -24,7 +24,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"message":"===========!DEPLOYMENT SUCCESSFU!==========="}
+    return {"message":"===========!DEPLOYMENT SUCCESSFUL!==========="}
 
 
 @app.get("/parts/", status_code=status.HTTP_200_OK, response_model=List[PartResponse])
