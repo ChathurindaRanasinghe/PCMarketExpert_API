@@ -62,4 +62,5 @@ jobs:
           heroku_app_name: ${{secrets.HEROKU_APP_NAME}} 
           heroku_email: ${{secrets.HEROKU_EMAIL}}
       - name: running almebic
-        run: alembic upgrade head
+        run: |
+          alembic upgrade head
