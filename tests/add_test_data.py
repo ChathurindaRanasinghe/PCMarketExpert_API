@@ -17,7 +17,7 @@ def add_test_data():
 
     query = """
             COPY "products" (NAME,PRICE,CATEGORY,BRAND,LINK,SHOP,AVAILABILITY,SPEC)
-            FROM 'products_test_data.CSV'
+            FROM 'tests\products_test_data.CSV'
             DELIMITER ','
             CSV HEADER
             """
