@@ -7,10 +7,11 @@ from sqlalchemy.orm import sessionmaker
 from app.main import app
 from app import schemas
 from app.database import get_db, Base
+from app.config import settings
 
-SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:Chathurinda99*@localhost:5432/PCMarketExpert'
-# SQLALCHEMY_DATABASE_URL = f'postgresql://{settings.database_username}:{settings.database_password}@' \
-#                           f'{settings.database_hostname}:{settings.database_port}/{settings.database_name}'
+
+SQLALCHEMY_DATABASE_URL = f'postgresql://{settings.database_username}:{settings.database_password}@' \
+                          f'{settings.database_hostname}:{settings.database_port}/{settings.database_name}'
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
@@ -32,11 +33,11 @@ app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
 
 
-# def test_parts():
-#     res = client.get("/parts/", params={'category': 'gpu'})
-#     for index in range(0, len(res.json())):
-#         schemas.PartResponse(**(res.json()[index]))
-#     assert res.status_code == status.HTTP_200_OK
+def test_parts():
+    res = client.get("/parts/", params={'category': 'gpu'})
+    for index in range(0, len(res.json())):
+        schemas.PartResponse(**(res.json()[index]))
+    assert res.status_code == status.HTTP_200_OK
 
 
 def test_zero_parts():
