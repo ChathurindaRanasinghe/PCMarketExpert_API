@@ -18,7 +18,7 @@ def add_test_data():
             print("Error: ", error)
             time.sleep(2)
 
-    df = pd.read_csv('products_test_data.CSV')
+    df = pd.read_csv('./tests/products_test_data.CSV')
     row_count = len(df.index)
     for row in range(row_count):
         query = """
