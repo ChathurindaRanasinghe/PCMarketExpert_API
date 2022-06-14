@@ -2,7 +2,6 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 
-from app.config import settings
 
 while True:
     try:
