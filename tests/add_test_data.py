@@ -25,9 +25,9 @@ def add_test_data():
                 INSERT INTO "products" (ID,NAME,PRICE,CATEGORY,BRAND,LINK,SHOP,AVAILABILITY,SPEC)
                 VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 """
-        record = (df.loc[row, 'id'],
+        record = (df.loc[row, 'id'].item(),
                   df.loc[row, 'name'],
-                  df.loc[row, 'price'],
+                  df.loc[row, 'price'].item(),
                   df.loc[row, 'category'],
                   df.loc[row, 'brand'],
                   df.loc[row, 'link'],
