@@ -54,11 +54,11 @@ def test_parts_invalid_part(part: str):
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
 
-# @pytest.mark.parametrize("limit", NO_PARTS)
-# def test_parts_limit(limit: int):
-#     res = client.get("/parts/", params={'category': 'gpu', 'limit': f'{limit}'})
-#     assert int(limit) >= len(res.json())
-#     assert res.status_code == status.HTTP_200_OK
+@pytest.mark.parametrize("limit", NO_PARTS)
+def test_parts_limit(limit: int):
+    res = client.get("/parts/", params={'category': 'gpu', 'limit': f'{limit}'})
+    assert int(limit) >= len(res.json())
+    assert res.status_code == status.HTTP_200_OK
 
 
 @pytest.mark.parametrize("limit", NO_PARTS_WITH_MINUS_AND_ZERO)
