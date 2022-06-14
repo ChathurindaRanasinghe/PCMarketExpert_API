@@ -4,12 +4,12 @@ import time
 import pandas as pd
 
 
-def add_test_data():
+def add_test_data(database: str, password: str):
 
     while True:
         try:
-            conn = psycopg2.connect(host='localhost', database='PCMarketExpert',
-                                    user='postgres', password='Chathurinda99*', cursor_factory=RealDictCursor)
+            conn = psycopg2.connect(host='localhost', database=database,
+                                    user='postgres', password=password, cursor_factory=RealDictCursor)
             cursor = conn.cursor()
             print("Connection Success! :)")
             break

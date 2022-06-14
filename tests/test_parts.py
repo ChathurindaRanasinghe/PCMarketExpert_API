@@ -30,7 +30,7 @@ def override_get_db():
 
 
 app.dependency_overrides[get_db] = override_get_db
-add_test_data()
+add_test_data(database=settings.database_name, password=settings.database_password)
 
 client = TestClient(app)
 
