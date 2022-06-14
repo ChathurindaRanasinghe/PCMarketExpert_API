@@ -6,8 +6,8 @@ from app.config import settings
 
 while True:
     try:
-        conn = psycopg2.connect(host=Settings.database_hostname, database=settings.database_name,
-                                user=settings.database_username, password=settings.database_password, cursor_factory=RealDictCursor)
+        conn = psycopg2.connect(host='localhost', database='PCMarketExpert',
+                                user='postgres', password='Chathurinda99*', cursor_factory=RealDictCursor)
         cursor = conn.cursor()
         print("Connection Success! :)")
         break
