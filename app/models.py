@@ -1,5 +1,6 @@
 from sqlalchemy import Column
-from sqlalchemy.sql.sqltypes import Integer, String, Boolean, JSON, TIMESTAMP, Float
+from sqlalchemy.sql.sqltypes import Integer, String, Boolean, TIMESTAMP, Float
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.sql.expression import text
 from .database import Base
 
@@ -18,6 +19,20 @@ class Products(Base):
     spec = Column(JSON, nullable=False)
     created_date = Column(TIMESTAMP(timezone=True),
                           nullable=False, server_default=text('now()'))
+
+class PcParts(Base):
+    __tablename__ = "pc-parts"
+
+    id = Column(Integer, primary_key=True, nullable=False,server_default=text("nextval('products_id_seq'::regclass)"))
+    name = Column(String, nullable=False)
+    prices = Column(JSON, nullable=False)
+    category = Column(String, nullable=False)
+    brand = Column(String, nullable=False)
+    links = Column(JSON, nullable=False)
+    shops = Column(JSON, nullable=False)
+    availability = Column(JSON, nullable=False)
+    specs = Column(JSON, nullable=False)
+    index = Column(Integer, nullable=False)
 
 
 class ShopMetadata(Base):
