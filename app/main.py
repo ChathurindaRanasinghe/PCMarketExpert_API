@@ -78,9 +78,8 @@ def get_storage(capacity: int | None = None, cache: int | None = None, type: str
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail=f"{limit} is not a valid number of parts.")
     storage = None
-    if capacity == None and cache == None and type == None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="at least one parameter should be specified")
+    if capacity is None and cache == None and type == None:
+        storage = db.query(models.PcParts).filter(models.PcParts.category == "storage").all()
 
     elif capacity == None and cache == None and type != None:
         storage = db.query(models.PcParts).filter(
