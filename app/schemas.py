@@ -17,6 +17,9 @@ class PartResponse(BaseModel):
     class Config:
         orm_mode = True
 
+class User(BaseModel):
+    email: str
+
 class PcPartResponse(BaseModel):
     id: int
     name: str

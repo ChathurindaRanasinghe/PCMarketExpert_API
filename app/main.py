@@ -1,14 +1,16 @@
 from re import T
 from fastapi import FastAPI, Response, status, Depends, HTTPException
+from fastapi.security.api_key import APIKeyQuery, APIKeyBase
 from . import models
 from .database import engine, get_db
 from sqlalchemy.orm import Session
-from .schemas import PartResponse, LaptopResponse, PcPartResponse
+from .schemas import PartResponse, LaptopResponse, PcPartResponse, User
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 from .data import PARTS, SHOPS
 from sqlalchemy import INTEGER, Float, Integer, String
 from sqlalchemy import cast
+from secrets import token_urlsafe
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -29,6 +31,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def validate_api_key(api_key:str, db: Session = Depends(get_db)):
+    api_key_db = db.query(models.APIKey).filter(models.APIKey.api_key == api_key).all()
+    if api_key_db == []:
+        return False
+    return True
+
 
 # , columns: List[str] = ["*"]
 
@@ -37,14 +45,33 @@ def root():
     return {"message": "===========!DEPLOYMENT SUCCESSFUL!==========="}
 
 
-@app.get("/parts/", status_code=status.HTTP_200_OK, response_model=List[PartResponse])
+
+@app.post("/get-api-key")
+def get_api_key(user:User,db: Session = Depends(get_db)):
+    # validate email
+    email_exists = db.query(models.APIKey).filter(models.APIKey.email == user.email).all()
+    api_key = None
+    if email_exists == []:
+        api_key = token_urlsafe(64)
+        api_key_obj = models.APIKey(email=user.email, api_key=api_key)
+        db.add(api_key_obj)
+        db.commit()
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"{user.email} already exists.")
+
+    return api_key
+
+
+
+@app.get("/parts/", status_code=status.HTTP_200_OK, response_model=List[PcPartResponse])
 def get_parts(category: str, limit: int = 100000, db: Session = Depends(get_db)):
     if limit <= 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail=f"{limit} is not a valid number of parts.")
     if category in PARTS:
-        parts = db.query(models.Products).filter(
-            models.Products.category == category).limit(limit).all()
+        parts = db.query(models.PcParts).filter(
+            models.PcParts.category == category).limit(limit).all()
         if not parts:
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         return parts
