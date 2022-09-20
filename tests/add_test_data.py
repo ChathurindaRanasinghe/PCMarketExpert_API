@@ -18,22 +18,22 @@ def add_test_data(database: str, password: str):
             print("Error: ", error)
             time.sleep(2)
 
-    df = pd.read_csv('./tests/products_test_data.CSV')
+    df = pd.read_csv('./tests/testdata.CSV')
     row_count = len(df.index)
     for row in range(row_count):
         query = """
-                INSERT INTO "pc-parts" (ID,NAME,PRICE,CATEGORY,BRAND,LINK,SHOP,AVAILABILITY,SPEC)
+                INSERT INTO "pc-parts" (ID,NAME,PRICES,CATEGORY,BRAND,LINKS,SHOPS,AVAILABILITY,SPECS)
                 VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 """
         record = (df.loc[row, 'id'].item(),
                   df.loc[row, 'name'],
-                  df.loc[row, 'price'].item(),
+                  df.loc[row, 'prices'].item(),
                   df.loc[row, 'category'],
                   df.loc[row, 'brand'],
-                  df.loc[row, 'link'],
-                  df.loc[row, 'shop'],
+                  df.loc[row, 'links'],
+                  df.loc[row, 'shops'],
                   df.loc[row, 'availability'],
-                  df.loc[row, 'spec']
+                  df.loc[row, 'specs']
                   )
         cursor.execute(query,record)
         conn.commit()
