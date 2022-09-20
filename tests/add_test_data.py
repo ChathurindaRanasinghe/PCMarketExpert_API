@@ -27,7 +27,7 @@ def add_test_data(database: str, password: str):
                 """
         record = (df.loc[row, 'id'].item(),
                   df.loc[row, 'name'],
-                  df.loc[row, 'prices'].item(),
+                  df.loc[row, 'prices'],
                   df.loc[row, 'category'],
                   df.loc[row, 'brand'],
                   df.loc[row, 'links'],
