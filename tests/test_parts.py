@@ -36,7 +36,7 @@ client = TestClient(app)
 
 
 def test_parts():
-    res = client.get("/parts/", params={'category': 'gpu'})
+    res = client.get("/parts/", params={'category': 'cpu'})
     for index in range(0, len(res.json())):
         schemas.PartResponse(**(res.json()[index]))
     assert res.status_code == status.HTTP_200_OK
@@ -56,13 +56,13 @@ def test_parts_invalid_part(part: str):
 
 @pytest.mark.parametrize("limit", NO_PARTS)
 def test_parts_limit(limit: int):
-    res = client.get("/parts/", params={'category': 'gpu', 'limit': f'{limit}'})
+    res = client.get("/parts/", params={'category': 'cpu', 'limit': f'{limit}'})
     assert int(limit) >= len(res.json())
     assert res.status_code == status.HTTP_200_OK
 
 
 @pytest.mark.parametrize("limit", NO_PARTS_WITH_MINUS_AND_ZERO)
 def test_parts_limit_with_minus_and_zero(limit: int):
-    res = client.get("/parts/", params={'category': 'gpu', 'limit': f'{limit}'})
+    res = client.get("/parts/", params={'category': 'cpu', 'limit': f'{limit}'})
     assert res.json()['detail'] == f"{limit} is not a valid number of parts."
     assert res.status_code == status.HTTP_400_BAD_REQUEST
