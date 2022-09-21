@@ -38,7 +38,7 @@ client = TestClient(app)
 def test_parts():
     res = client.get("/parts/", params={'category': 'cpu'})
     for index in range(0, len(res.json())):
-        schemas.PartResponse(**(res.json()[index]))
+        schemas.PcPartResponse(**(res.json()[index]))
     assert res.status_code == status.HTTP_200_OK
 
 
