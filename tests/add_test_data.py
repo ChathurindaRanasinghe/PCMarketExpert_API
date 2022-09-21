@@ -33,7 +33,8 @@ def add_test_data(database: str, password: str):
                   df.loc[row, 'links'],
                   df.loc[row, 'shops'],
                   df.loc[row, 'availability'],
-                  df.loc[row, 'specs']
+                  df.loc[row, 'specs'],
+                  df.loc[row, 'index']
                   )
         cursor.execute(query,record)
         conn.commit()
