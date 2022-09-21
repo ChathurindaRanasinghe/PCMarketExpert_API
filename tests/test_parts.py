@@ -43,7 +43,7 @@ def test_parts():
 
 
 def test_zero_parts():
-    res = client.get("/parts/", params={'category': 'cpu'})
+    res = client.get("/parts/", params={'category': 'gpu'})
     assert res.status_code == status.HTTP_204_NO_CONTENT
 
 
