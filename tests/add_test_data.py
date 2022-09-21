@@ -18,7 +18,7 @@ def add_test_data(database: str, password: str):
             print("Error: ", error)
             time.sleep(2)
 
-    df = pd.read_csv('./tests/testdata.csv')
+    df = pd.read_csv('./tests/pc-parts.csv')
     row_count = len(df.index)
     for row in range(row_count):
         query = """
