@@ -21,7 +21,7 @@ from .database import Base
 #                           nullable=False, server_default=text('now()'))
 
 class PcParts(Base):
-    __tablename__ = "pc-parts"
+    __tablename__ = "pc-parts" 
 
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String, nullable=False)
