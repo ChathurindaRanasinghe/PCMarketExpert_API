@@ -23,7 +23,7 @@ def add_test_data(database: str, password: str):
     for row in range(row_count):
         query = """
                 INSERT INTO "pc-parts" (ID,NAME,PRICES,CATEGORY,BRAND,LINKS,SHOPS,AVAILABILITY,SPECS,INDEX)
-                VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 """
         record = (df.loc[row, 'id'].item(),
                   df.loc[row, 'name'],
