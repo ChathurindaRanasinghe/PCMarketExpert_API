@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     database_password: str
     database_name: str
     database_username: str
+    redis_url:str
+    
 
     class Config:
         env_file = ".env"

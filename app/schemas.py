@@ -32,6 +32,8 @@ class PcPartResponse(BaseModel):
     specs : dict
     index: int
 
+    
+
     class Config:
         orm_mode = True
 

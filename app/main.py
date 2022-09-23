@@ -1,5 +1,5 @@
 from re import T
-from fastapi import FastAPI, Response, status, Depends, HTTPException
+from fastapi import FastAPI, Response, status, Depends, HTTPException, BackgroundTasks
 from fastapi.security.api_key import APIKeyQuery, APIKeyBase
 from . import models
 from .database import engine, get_db
@@ -11,130 +11,250 @@ from .data import PARTS, SHOPS
 from sqlalchemy import INTEGER, Float, Integer, String
 from sqlalchemy import cast
 from secrets import token_urlsafe
+import redis
+from .config import settings
+import jsonpickle
 
 models.Base.metadata.create_all(bind=engine)
+
+
+# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 tags_metadata = [
     {
         "name": "/parts/storage",
-        "description": "Filter out storage products based on storage specifications."
+        "description": "Filter out storage products based on storage specifications.",
     }
 ]
 
-app = FastAPI(title="PCMarketExpert",version="0.0.0",openapi_tags=tags_metadata)
+app = FastAPI(title="PCMarketExpert", version="0.0.0", openapi_tags=tags_metadata)
+
+# api_keys = [
+#     "akljnv13bvi2vfo0b0bw"
+# ]  # This is encrypted in the database
+
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
-def validate_api_key(api_key:str, db: Session = Depends(get_db)):
-    api_key_db = db.query(models.APIKey).filter(models.APIKey.api_key == api_key).all()
-    if api_key_db == []:
-        return False
-    return True
+# def api_key_auth(api_key: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+# # api_key_db = db.query(models.APIKey).filter(models.APIKey.api_key == api_key).all()
+# # print(api_key_db)
+# # if api_key_db == []:
+# #     raise HTTPException(
+# #         status_code=status.HTTP_401_UNAUTHORIZED,
+# #         detail="Forbidden"
+# #     )
+# if api_key not in api_keys:
+#     raise HTTPException(
+#         status_code=status.HTTP_401_UNAUTHORIZED,
+#         detail="Forbidden"
+#     )
 
 
 # , columns: List[str] = ["*"]
 
+redis_client = redis.from_url(settings.redis_url)
+
+
+# @app.on_event("startup")
+# async def startup_event():
+#     redis_client = redis.from_url(settings.redis_url)
+
+
 @app.get("/")
 def root():
-    return {"message": "===========!DEPLOYMENT SUCCESSFUL!==========="}
+    return {"hello": "world"}
+
+    # result = VerifyToken(token.credentials).verify()
+
+    # if result.get("status"):
+    #     response.status_code = status.HTTP_400_BAD_REQUEST
+    #     return result
+    # else:
+    #     return result
 
 
+# @app.post("/get-api-key")
+# def get_api_key(user:User,db: Session = Depends(get_db)):
+#     # validate email
+#     email_exists = db.query(models.APIKey).filter(models.APIKey.email == user.email).all()
+#     api_key = None
+#     if email_exists == []:
+#         api_key = token_urlsafe(64)
+#         api_key_obj = models.APIKey(email=user.email, api_key=api_key)
+#         db.add(api_key_obj)
+#         db.commit()
+#     else:
+#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+#                             detail=f"{user.email} already exists.")
 
-@app.post("/get-api-key")
-def get_api_key(user:User,db: Session = Depends(get_db)):
-    # validate email
-    email_exists = db.query(models.APIKey).filter(models.APIKey.email == user.email).all()
-    api_key = None
-    if email_exists == []:
-        api_key = token_urlsafe(64)
-        api_key_obj = models.APIKey(email=user.email, api_key=api_key)
-        db.add(api_key_obj)
-        db.commit()
-    else:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"{user.email} already exists.")
+#     return api_key
 
-    return api_key
 
+def add_to_cache(key, value):
+    redis_client.set(key, jsonpickle.encode(value))
 
 
 @app.get("/parts/", status_code=status.HTTP_200_OK, response_model=List[PcPartResponse])
-def get_parts(category: str, limit: int = 100000, db: Session = Depends(get_db)):
+def get_parts(
+    category: str,
+    background_tasks: BackgroundTasks,
+    limit: int = 100000,
+    db: Session = Depends(get_db),
+):
     if limit <= 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"{limit} is not a valid number of parts.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{limit} is not a valid number of parts.",
+        )
     if category in PARTS:
-        parts = db.query(models.PcParts).filter(
-            models.PcParts.category == category).limit(limit).all()
+        if category == "storage":
+            exists = redis_client.get("parts-storage").decode("utf-8")
+            if exists == None:
+                print("getting from the database")
+                parts = (
+                    db.query(models.PcParts)
+                    .filter(models.PcParts.category == category)
+                    .limit(limit)
+                    .all()
+                )
+                background_tasks.add_task(add_to_cache,"parts-storage", parts)
+            else:
+                print("getting from the cache")
+                return jsonpickle.decode(exists)
         if not parts:
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         return parts
     elif category not in PARTS:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"{category} is not a valid part name.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{category} is not a valid part name.",
+        )
 
 
 @app.get("/shop/", status_code=status.HTTP_200_OK, response_model=List[PartResponse])
-def get_parts_from_shop(shop: str, category: str, limit: int = 100000, db: Session = Depends(get_db)):
+def get_parts_from_shop(
+    shop: str, category: str, limit: int = 100000, db: Session = Depends(get_db)
+):
     if limit <= 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"{limit} is not a valid number of parts.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{limit} is not a valid number of parts.",
+        )
     if shop in SHOPS and category in PARTS:
-        parts = db.query(models.Products).filter(models.Products.category ==
-                                                 category and models.Products.shop == shop).limit(limit).all()
+        parts = (
+            db.query(models.Products)
+            .filter(
+                models.Products.category == category and models.Products.shop == shop
+            )
+            .limit(limit)
+            .all()
+        )
         if not parts:
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         return parts
     elif shop not in SHOPS:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"{shop} is not a valid shop name.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{shop} is not a valid shop name.",
+        )
     elif category not in PARTS:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"{category} is not a valid part name.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{category} is not a valid part name.",
+        )
 
 
-@app.get("/parts/storage", status_code=status.HTTP_200_OK, response_model=List[PcPartResponse],tags=["/parts/storage"])
-def get_storage(capacity: int | None = None, cache: int | None = None, type: str | None = None, limit: int = 10000, db: Session = Depends(get_db)):
+@app.get(
+    "/parts/storage",
+    status_code=status.HTTP_200_OK,
+    response_model=List[PcPartResponse],
+    tags=["/parts/storage"],
+)
+def get_storage(
+    capacity: int | None = None,
+    cache: int | None = None,
+    type: str | None = None,
+    limit: int = 10000,
+    db: Session = Depends(get_db),
+):
     if limit <= 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"{limit} is not a valid number of parts.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{limit} is not a valid number of parts.",
+        )
     storage = None
     if capacity is None and cache == None and type == None:
-        storage = db.query(models.PcParts).filter(models.PcParts.category == "storage").all()
+        storage = (
+            db.query(models.PcParts).filter(models.PcParts.category == "storage").all()
+        )
 
     elif capacity == None and cache == None and type != None:
-        storage = db.query(models.PcParts).filter(
-            models.PcParts.specs['type'].astext.cast(String) == type).limit(limit).all()
+        storage = (
+            db.query(models.PcParts)
+            .filter(models.PcParts.specs["type"].astext.cast(String) == type)
+            .limit(limit)
+            .all()
+        )
 
     elif capacity == None and cache != None and type == None:
-        storage = db.query(models.PcParts).filter(
-            models.PcParts.specs['cache'].astext.cast(Float) == cache).limit(limit).all()
+        storage = (
+            db.query(models.PcParts)
+            .filter(models.PcParts.specs["cache"].astext.cast(Float) == cache)
+            .limit(limit)
+            .all()
+        )
 
     elif capacity == None and cache != None and type != None:
-        storage = db.query(models.PcParts).filter(models.PcParts.specs['cache'].astext.cast(
-            Float) == cache).filter(models.PcParts.specs['type'].astext.cast(String) == type).limit(limit).all()
+        storage = (
+            db.query(models.PcParts)
+            .filter(models.PcParts.specs["cache"].astext.cast(Float) == cache)
+            .filter(models.PcParts.specs["type"].astext.cast(String) == type)
+            .limit(limit)
+            .all()
+        )
 
     elif capacity != None and cache == None and type == None:
-        storage = db.query(models.PcParts).filter(
-            models.PcParts.specs['capacity'].astext.cast(Float) == capacity).limit(limit).all()
+        storage = (
+            db.query(models.PcParts)
+            .filter(models.PcParts.specs["capacity"].astext.cast(Float) == capacity)
+            .limit(limit)
+            .all()
+        )
 
     elif capacity != None and cache == None and type != None:
-        storage = db.query(models.PcParts).filter(models.PcParts.specs['capacity'].astext.cast(
-            Float) == capacity).filter(models.PcParts.specs['type'].astext.cast(String) == type).limit(limit).all()
+        storage = (
+            db.query(models.PcParts)
+            .filter(models.PcParts.specs["capacity"].astext.cast(Float) == capacity)
+            .filter(models.PcParts.specs["type"].astext.cast(String) == type)
+            .limit(limit)
+            .all()
+        )
 
     elif capacity != None and cache != None and type == None:
-        storage = db.query(models.PcParts).filter(models.PcParts.specs['capacity'].astext.cast(
-            Float) == capacity).filter(models.PcParts.specs['cache'].astext.cast(Float) == cache).limit(limit).all()
+        storage = (
+            db.query(models.PcParts)
+            .filter(models.PcParts.specs["capacity"].astext.cast(Float) == capacity)
+            .filter(models.PcParts.specs["cache"].astext.cast(Float) == cache)
+            .limit(limit)
+            .all()
+        )
 
     elif capacity != None and cache != None and type != None:
-        storage = db.query(models.PcParts).filter(models.PcParts.specs['capacity'].astext.cast(Float) == capacity).filter(
-            models.PcParts.specs['cache'].astext.cast(Float) == cache).filter(models.PcParts.specs['type'].astext.cast(String) == type).limit(limit).all()
+        storage = (
+            db.query(models.PcParts)
+            .filter(models.PcParts.specs["capacity"].astext.cast(Float) == capacity)
+            .filter(models.PcParts.specs["cache"].astext.cast(Float) == cache)
+            .filter(models.PcParts.specs["type"].astext.cast(String) == type)
+            .limit(limit)
+            .all()
+        )
 
     if not storage:
         return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -167,7 +287,7 @@ def get_storage(capacity: int | None = None, cache: int | None = None, type: str
 
 #     return laptops
 
-    # @app.get("/shop/basic_data",  status_code=status.HTTP_200_OK, response_model=ShopMetadataResponse)
-    # def get_shop_metadata(shop: str, db: Session = Depends(get_db)):
-    #     if shop in SHOPS:
+# @app.get("/shop/basic_data",  status_code=status.HTTP_200_OK, response_model=ShopMetadataResponse)
+# def get_shop_metadata(shop: str, db: Session = Depends(get_db)):
+#     if shop in SHOPS:
 #         basic_data = db.query)
