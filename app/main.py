@@ -124,13 +124,13 @@ def get_parts(
                     .limit(limit)
                     .all()
                 )
+                if not parts:
+                    return Response(status_code=status.HTTP_204_NO_CONTENT)
                 background_tasks.add_task(add_to_cache,"parts-storage", parts)
+                return parts
             else:
                 print("getting from the cache")
                 return jsonpickle.decode(exists)
-        if not parts:
-            return Response(status_code=status.HTTP_204_NO_CONTENT)
-        return parts
     elif category not in PARTS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
