@@ -37,6 +37,14 @@ class PcPartResponse(BaseModel):
     class Config:
         orm_mode = True
 
+class ShopMetadataResponse(BaseModel):
+    shop: str
+    numberOfProducts: dict
+    availabilityOfProducts: dict
+
+    class Config:
+        orm_mode = True
+
 
 class LaptopResponse(BaseModel):
     id: int
