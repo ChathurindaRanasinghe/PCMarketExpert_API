@@ -115,7 +115,7 @@ def get_parts(
         )
     if category in PARTS:
         if category == "storage":
-            exists = redis_client.get("parts-storage")
+            exists = redis_client.get(f"parts-storage-{limit}")
             if exists == None:
                 print("getting from the database")
                 parts = (
@@ -126,11 +126,20 @@ def get_parts(
                 )
                 if not parts:
                     return Response(status_code=status.HTTP_204_NO_CONTENT)
-                background_tasks.add_task(add_to_cache,"parts-storage", parts)
+                background_tasks.add_task(add_to_cache,f"parts-storage-{limit}", parts)
                 return parts
             else:
                 print("getting from the cache")
                 return jsonpickle.decode(exists)
+        else:
+            parts = (
+                    db.query(models.PcParts)
+                    .filter(models.PcParts.category == category)
+                    .limit(limit)
+                    .all()
+                )
+            if not parts:
+                return Response(status_code=status.HTTP_204_NO_CONTENT)
     elif category not in PARTS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
