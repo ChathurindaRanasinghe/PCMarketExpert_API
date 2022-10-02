@@ -38,4 +38,4 @@ def add_test_data(database: str, password: str):
                   )
         cursor.execute(query,record)
         conn.commit()
-        conn.close()
+    conn.close()
