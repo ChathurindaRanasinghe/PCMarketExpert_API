@@ -33,7 +33,7 @@ def fetch_api_keys() -> List[str]:
     while True:
         try:
             conn = psycopg2.connect(host=settings.database_hostname, database=settings.database_name,
-                                    user='postgres', password=settings.database_password, cursor_factory=RealDictCursor)
+                                    user=settings.database_username, password=settings.database_password, cursor_factory=RealDictCursor)
             cursor = conn.cursor()
             print("Connection Success! :)")
             break
