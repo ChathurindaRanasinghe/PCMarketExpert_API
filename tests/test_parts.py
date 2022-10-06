@@ -36,10 +36,11 @@ app.dependency_overrides[get_db] = override_get_db
 
 client = TestClient(app)
 
-api_key = client.post("/generate-api-key/",json={
-    "email":"test123@email.com"
-})
 
+
+def test_api_key():
+    res = client.post("/generate-api-key",json={"email":"test123@email.com"})
+    assert res.status_code == status.HTTP_200_OK
 
 
 
