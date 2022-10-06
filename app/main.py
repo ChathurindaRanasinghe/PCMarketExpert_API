@@ -66,6 +66,7 @@ app.add_middleware(
 redis_client = redis.from_url(settings.redis_url,encoding="utf-8", decode_responses=True)
 
 
+
 @app.on_event("startup")
 async def startup_event(db: Session = Depends(get_db)):
     api_keys = fetch_api_keys()
@@ -97,6 +98,8 @@ def generate_api_key(user:User,db: Session = Depends(get_db)):
         api_key_obj = models.APIKey(email=user.email, api_key=hashed_api_key)
         db.add(api_key_obj)
         db.commit()
+        api_keys = fetch_api_keys()
+        redis_client.set("api_keys",jsonpickle.encode(api_keys))
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail=f"{user.email} already exists.")
@@ -114,6 +117,8 @@ def get_parts(
     background_tasks: BackgroundTasks,
     limit: int = 100000,
     db: Session = Depends(get_db),
+    api_key: APIKey = Depends(get_api_key)
+    
 ):
     if limit <= 0:
         raise HTTPException(
@@ -158,7 +163,7 @@ def get_parts(
 
 @app.get("/shop/", status_code=status.HTTP_200_OK, response_model=List[PartResponse])
 def get_parts_from_shop(
-    shop: str, category: str, limit: int = 100000, db: Session = Depends(get_db)
+    shop: str, category: str, limit: int = 100000, db: Session = Depends(get_db),api_key: APIKey = Depends(get_api_key)
 ):
     if limit <= 0:
         raise HTTPException(
@@ -201,6 +206,7 @@ def get_storage(
     type: str | None = None,
     limit: int = 10000,
     db: Session = Depends(get_db),
+    api_key: APIKey = Depends(get_api_key)
 ):
     if limit <= 0:
         raise HTTPException(
@@ -289,6 +295,7 @@ def get_cpu(
     integrated_graphics: bool | None = None,
     limit: int = 10000,
     db: Session = Depends(get_db),
+    api_key: APIKey = Depends(get_api_key)
 ):
     # print(integrated_graphics)
     cpu = None
@@ -389,7 +396,7 @@ def get_cpu(
 
 
 @app.get("/shop-metadata/", status_code=status.HTTP_200_OK, response_model=List[ShopMetadataResponse])
-def get_shop_meta_data(db: Session = Depends(get_db)):
+def get_shop_meta_data(db: Session = Depends(get_db),api_key: APIKey = Depends(get_api_key)):
     result = []
     PcParts = db.query(models.PcParts).all()
     category_records = db.query(models.PcParts.category).distinct().all()
@@ -428,7 +435,7 @@ def get_shop_meta_data(db: Session = Depends(get_db)):
     return result
 
 @app.get('/past-data/',status_code=status.HTTP_200_OK)
-def get_past_data(category:str,date:datetime.date):
+def get_past_data(category:str,date:datetime.date,api_key: APIKey = Depends(get_api_key)):
     keys = redis_client.keys()
     if category in PARTS:
         key = f"{date}".replace("-","")
@@ -439,33 +446,3 @@ def get_past_data(category:str,date:datetime.date):
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=f"{category} is not valid.")
 
-# """models.Laptops.memory <= memory_max and"""
-#  and models.Laptops.weight.between(weight_min, weight_max) ) and
-# models.Laptops.storage.between(storage_min,storage_max)
-
-
-# @app.get("/laptops", status_code=status.HTTP_200_OK, response_model=List[LaptopResponse])
-# def get_laptops(storage_type: str | None = None, storage_min: int = 0, storage_max: int = 10000, memory_min: int = 0, memory_max: int = 1000,
-#                 operating_system: str | None = None, weight_min: float = 0.0, weight_max: float = 10.0, cpu_brand: str | None = None, cpu_model: str | None = None,
-#                 screen_size_min: float = 0.0, screen_size_max: float = 100.0, screen_resolution: str | None = None, screen_refresh_rate_min: int = 0, screen_refresh_rate_max: int = 500,
-#                 db: Session = Depends(get_db)):
-
-#     laptops = []
-#     if storage_type is not None:
-#         laptops = db.query(models.Laptops).filter(models.Laptops.memory.between(memory_min, memory_max))\
-#             .filter(models.Laptops.weight.between(weight_min, weight_max))\
-#             .filter(models.Laptops.storage[storage_type].astext.cast(Integer).between(storage_min, storage_max))\
-#             .all()
-#     elif storage_type is None:
-#         laptops = db.query(models.Laptops).filter(models.Laptops.memory.between(memory_min, memory_max))\
-#             .filter(models.Laptops.weight.between(weight_min, weight_max))\
-#             .all()
-
-#     res = []
-
-#     return laptops
-
-# @app.get("/shop/basic_data",  status_code=status.HTTP_200_OK, response_model=ShopMetadataResponse)
-# def get_shop_metadata(shop: str, db: Session = Depends(get_db)):
-#     if shop in SHOPS:
-#         basic_data = db.query)
