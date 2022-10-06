@@ -37,15 +37,14 @@ client = TestClient(app)
 
 def test_parts():
     res = client.get("/parts/", params={'category': 'storage'})
-    print(res)
     for index in range(0, len(res.json())):
         schemas.PcPartResponse(**(res.json()[index]))
     assert res.status_code == status.HTTP_200_OK
 
 
-def test_zero_parts():
-    res = client.get("/parts/", params={'category': 'gpu'})
-    assert res.status_code == status.HTTP_204_NO_CONTENT
+# def test_zero_parts():
+#     res = client.get("/parts/", params={'category': 'gpu'})
+#     assert res.status_code == status.HTTP_204_NO_CONTENT
 
 
 @pytest.mark.parametrize("part", INVALID_PARTS)

@@ -5,7 +5,7 @@ from fastapi.security.api_key import APIKeyHeader
 from fastapi.security.api_key import APIKey
 
 from . import models
-from .database import engine, get_db, fetch_api_keys
+from .database import engine, get_db, fetch_api_keys, fetch_past_data
 from sqlalchemy.orm import Session
 from .schemas import PartResponse, ShopMetadataResponse, PcPartResponse, User
 from typing import List
@@ -18,7 +18,7 @@ import redis
 from .config import settings
 import jsonpickle
 import hashlib
-
+import datetime
 from pprint import pprint
 
 models.Base.metadata.create_all(bind=engine)
@@ -65,10 +65,17 @@ app.add_middleware(
 
 redis_client = redis.from_url(settings.redis_url,encoding="utf-8", decode_responses=True)
 
+
 @app.on_event("startup")
 async def startup_event(db: Session = Depends(get_db)):
     api_keys = fetch_api_keys()
     redis_client.set("api_keys",jsonpickle.encode(api_keys))
+    past_data = fetch_past_data()
+    dates = list(past_data.keys())
+    for date in dates:
+        redis_client.set(date,jsonpickle.encode(past_data[date]))
+    
+    
 
 
 
@@ -138,8 +145,10 @@ def get_parts(
                     .limit(limit)
                     .all()
                 )
+            
             if not parts:
                 return Response(status_code=status.HTTP_204_NO_CONTENT)
+            return parts
     elif category not in PARTS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -201,7 +210,7 @@ def get_storage(
     storage = None
     if capacity is None and cache == None and type == None:
         storage = (
-            db.query(models.PcParts).filter(models.PcParts.category == "storage").all()
+            db.query(models.PcParts).filter(models.PcParts.category == "storage").limit(limit).all()
         )
 
     elif capacity == None and cache == None and type != None:
@@ -269,6 +278,115 @@ def get_storage(
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     return storage
 
+@app.get(
+    "/parts/cpu",
+    status_code=status.HTTP_200_OK,
+    response_model=List[PcPartResponse],
+)
+def get_cpu(
+    core_count: int | None = None,
+    tdp: int | None = None,
+    integrated_graphics: bool | None = None,
+    limit: int = 10000,
+    db: Session = Depends(get_db),
+):
+    # print(integrated_graphics)
+    cpu = None
+    if limit <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{limit} is not a valid number of parts.",
+        )
+
+    else:
+        if core_count == None and tdp == None and integrated_graphics == None:
+            cpu = (
+            db.query(models.PcParts).filter(models.PcParts.category == "cpu").limit(limit).all()
+        )
+        elif core_count == None and tdp == None and integrated_graphics != None:
+            
+            if integrated_graphics == False:
+                cpu = (
+                db.query(models.PcParts).filter(models.PcParts.category == "cpu").
+                filter(models.PcParts.specs["integrated-graphics"].astext.cast(String) == "None").
+                limit(limit).all()
+                )
+            else:
+                cpu = (
+            db.query(models.PcParts).filter(models.PcParts.category == "cpu").
+            filter(models.PcParts.specs["integrated-graphics"].astext.cast(String) != "None").
+            limit(limit).all()
+            )
+        elif core_count == None and tdp != None and integrated_graphics == None:
+             cpu = (
+            db.query(models.PcParts).filter(models.PcParts.category == "cpu").
+            filter(models.PcParts.specs["tdp"].astext.cast(Float) == tdp).
+            limit(limit).all()
+            )
+        elif core_count == None and tdp != None and integrated_graphics != None:
+            
+            if integrated_graphics == False:
+                cpu = (
+                db.query(models.PcParts).filter(models.PcParts.category == "cpu").
+                filter(models.PcParts.specs["integrated-graphics"].astext.cast(String) == "None").
+                filter(models.PcParts.specs["tdp"].astext.cast(Float) == tdp).
+                limit(limit).all()
+                )
+            else:
+                cpu = (
+            db.query(models.PcParts).filter(models.PcParts.category == "cpu").
+            filter(models.PcParts.specs["integrated-graphics"].astext.cast(String) != "None").
+            filter(models.PcParts.specs["tdp"].astext.cast(Float) == tdp).
+            limit(limit).all()
+            )
+        elif core_count != None and tdp == None and integrated_graphics == None:
+            cpu = (
+            db.query(models.PcParts).filter(models.PcParts.category == "cpu").
+            filter(models.PcParts.specs["core-count"].astext.cast(Float) == core_count).
+            limit(limit).all()
+            )
+        elif core_count != None and tdp == None and integrated_graphics != None:
+            if integrated_graphics == False:
+                cpu = (
+                db.query(models.PcParts).filter(models.PcParts.category == "cpu").
+                filter(models.PcParts.specs["integrated-graphics"].astext.cast(String) == "None").
+                filter(models.PcParts.specs["core-count"].astext.cast(Float) == core_count).
+                limit(limit).all()
+                )
+            else:
+                cpu = (
+            db.query(models.PcParts).filter(models.PcParts.category == "cpu").
+            filter(models.PcParts.specs["integrated-graphics"].astext.cast(String) != "None").
+            filter(models.PcParts.specs["core-count"].astext.cast(Float) == core_count).
+            limit(limit).all()
+            )
+        elif core_count != None and tdp != None and integrated_graphics == None:
+            cpu = (
+            db.query(models.PcParts).filter(models.PcParts.category == "cpu").
+            filter(models.PcParts.specs["core-count"].astext.cast(Float) == core_count).
+            filter(models.PcParts.specs["tdp"].astext.cast(Float) == tdp).
+            limit(limit).all()
+            )
+        elif core_count != None and tdp != None and integrated_graphics != None:
+            if integrated_graphics == False:
+                cpu = (
+                db.query(models.PcParts).filter(models.PcParts.category == "cpu").
+                filter(models.PcParts.specs["integrated-graphics"].astext.cast(String) == "None").
+                filter(models.PcParts.specs["core-count"].astext.cast(Float) == core_count).
+                filter(models.PcParts.specs["tdp"].astext.cast(Float) == tdp).
+                limit(limit).all()
+                )
+            else:
+                cpu = (
+            db.query(models.PcParts).filter(models.PcParts.category == "cpu").
+            filter(models.PcParts.specs["integrated-graphics"].astext.cast(String) != "None").
+            filter(models.PcParts.specs["core-count"].astext.cast(Float) == core_count).
+            filter(models.PcParts.specs["tdp"].astext.cast(Float) == tdp).
+            limit(limit).all()
+            )
+    return cpu
+        
+
 
 @app.get("/shop-metadata/", status_code=status.HTTP_200_OK, response_model=List[ShopMetadataResponse])
 def get_shop_meta_data(db: Session = Depends(get_db)):
@@ -308,6 +426,18 @@ def get_shop_meta_data(db: Session = Depends(get_db)):
         result.append(shop_response)
 
     return result
+
+@app.get('/past-data/',status_code=status.HTTP_200_OK)
+def get_past_data(category:str,date:datetime.date):
+    keys = redis_client.keys()
+    if category in PARTS:
+        key = f"{date}".replace("-","")
+        if key in keys:
+            return jsonpickle.decode(redis_client.get(key))[category]
+        else:
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=f"{category} is not valid.")
 
 # """models.Laptops.memory <= memory_max and"""
 #  and models.Laptops.weight.between(weight_min, weight_max) ) and
