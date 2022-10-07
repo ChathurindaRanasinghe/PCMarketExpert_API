@@ -191,7 +191,7 @@ def get_parts(
         )
 
 
-@app.get("/shop/", status_code=status.HTTP_200_OK, response_model=List[PartResponse],tags=["/shop/"])
+@app.get("/shop/", status_code=status.HTTP_200_OK, response_model=List[PcPartResponse],tags=["/shop/"])
 def get_parts_from_shop(
     shop: str, category: str, limit: int = 100000, db: Session = Depends(get_db),api_key: APIKey = Depends(get_api_key)
 ):
@@ -202,16 +202,21 @@ def get_parts_from_shop(
         )
     if shop in SHOPS and category in PARTS:
         parts = (
-            db.query(models.Products)
+            db.query(models.PcParts)
             .filter(
-                models.Products.category == category and models.Products.shop == shop
-            )
+                models.PcParts.category == category)
             .limit(limit)
             .all()
         )
-        if not parts:
+        new_parts = []
+        for part in parts:
+            shops = list(part.shops.keys())
+            if shop in shops:
+                new_parts.append(part)
+            
+        if not new_parts:
             return Response(status_code=status.HTTP_204_NO_CONTENT)
-        return parts
+        return new_parts
     elif shop not in SHOPS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
