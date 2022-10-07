@@ -1,6 +1,6 @@
 # PCMarketExpert_API
 
-##Supported Product Categories
+## Supported Product Categories
 ```
 cpu
 gpu
@@ -10,21 +10,21 @@ storage
 memory
 ```
 
-##CPU Query
+## CPU Query
 ```
 tdp:int
 integrated_graphics:bool
 core_count:int
 ```
 
-##Storage Query
+## Storage Query
 ```
 type:str
 cache:int
 capacity:int
 ```
 
-##Shops
+## Shops
 ```
 Nanotek
 Gamestreet
