@@ -29,9 +29,39 @@ api_key_header = APIKeyHeader(name="access_token", auto_error=False)
 
 tags_metadata = [
     {
+        "name" : "/",
+        "description": "Root of api. Can be used for validate API key"
+    },
+    {
         "name": "/parts/storage",
         "description": "Filter out storage products based on storage specifications.",
+    },
+    {
+        "name": "/parts/cpu",
+        "description": "Filter out cpu products based on storage specifications.",
+    },
+    {
+        "name": "/generate-api-key",
+        "description": "Generates an API key."
+    },
+    {
+        "name" : "/parts/",
+        "description": "Filter parts for product categories."
+    },
+    {
+        "name" : "/shop-metadata/",
+        "description": "Provides statistical data about each shop."
+    },
+    {
+        "name" : "/past-data/",
+        "description": "Provides past data for each category."
+    },
+    {
+        "name" : "/shop/",
+        "description": "Provides data shopwise."
     }
+    
+
 ]
 
 app = FastAPI(title="PCMarketExpert", version="0.0.0", openapi_tags=tags_metadata)
@@ -81,13 +111,13 @@ async def startup_event(db: Session = Depends(get_db)):
 
 
 
-@app.get("/")
+@app.get("/",status_code=status.HTTP_200_OK,tags=["/"])
 def root(api_key: APIKey = Depends(get_api_key)):
     return {"hello": "world"}
 
 
 
-@app.post("/generate-api-key")
+@app.post("/generate-api-key",status_code=status.HTTP_200_OK,tags=["/generate-api-key"])
 def generate_api_key(user:User,db: Session = Depends(get_db)):
     # validate email
     email_exists = db.query(models.APIKey).filter(models.APIKey.email == user.email).all()
@@ -111,7 +141,7 @@ def add_to_cache(key, value):
     redis_client.set(key, jsonpickle.encode(value))
 
 
-@app.get("/parts/", status_code=status.HTTP_200_OK, response_model=List[PcPartResponse])
+@app.get("/parts/", status_code=status.HTTP_200_OK, response_model=List[PcPartResponse],tags=["/parts/"])
 def get_parts(
     category: str,
     background_tasks: BackgroundTasks,
@@ -161,7 +191,7 @@ def get_parts(
         )
 
 
-@app.get("/shop/", status_code=status.HTTP_200_OK, response_model=List[PartResponse])
+@app.get("/shop/", status_code=status.HTTP_200_OK, response_model=List[PartResponse],tags=["/shop/"])
 def get_parts_from_shop(
     shop: str, category: str, limit: int = 100000, db: Session = Depends(get_db),api_key: APIKey = Depends(get_api_key)
 ):
@@ -288,6 +318,7 @@ def get_storage(
     "/parts/cpu",
     status_code=status.HTTP_200_OK,
     response_model=List[PcPartResponse],
+    tags=["/parts/cpu"],
 )
 def get_cpu(
     core_count: int | None = None,
@@ -395,7 +426,7 @@ def get_cpu(
         
 
 
-@app.get("/shop-metadata/", status_code=status.HTTP_200_OK, response_model=List[ShopMetadataResponse])
+@app.get("/shop-metadata/", status_code=status.HTTP_200_OK, response_model=List[ShopMetadataResponse],tags=["/shop-metadata/"])
 def get_shop_meta_data(db: Session = Depends(get_db),api_key: APIKey = Depends(get_api_key)):
     result = []
     PcParts = db.query(models.PcParts).all()
@@ -434,7 +465,7 @@ def get_shop_meta_data(db: Session = Depends(get_db),api_key: APIKey = Depends(g
 
     return result
 
-@app.get('/past-data/',status_code=status.HTTP_200_OK)
+@app.get('/past-data/',status_code=status.HTTP_200_OK,tags=["/past-data/"])
 def get_past_data(category:str,date:datetime.date,api_key: APIKey = Depends(get_api_key)):
     keys = redis_client.keys()
     if category in PARTS:
